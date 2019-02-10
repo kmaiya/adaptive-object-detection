@@ -10,9 +10,8 @@ import cv2
 #   VIDEO_PREFIX:                                      # 
 #       - Prefix of the video stream. For EX: if the   #
 #       video is called 'bunnyhopping.mp4' the prefix  # 
-#       should be bunnyhopping. This prefix is used to #
-#       save the image frames                          #  
-#                                                      #     
+#       should be 'bunnyhopping'. This prefix is used  #
+#       to save the image frames                       #       
 #   SAVE_DIR:                                          #     
 #       - Directory to store the extracted frames into #
 ########################################################
