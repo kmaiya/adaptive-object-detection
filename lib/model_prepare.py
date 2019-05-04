@@ -46,7 +46,10 @@ class PreModel:
         else:
             self.width, self.height = model_intake_size
 
-        self._module_list_channel_count()
+        try:
+            self._module_list_channel_count()
+        except RuntimeError:
+            self.size_count = None
 
         gc.collect()
         torch.cuda.empty_cache()
@@ -88,6 +91,7 @@ class PreModel:
             if i == layer_idx:
                 return img
         return img
+
     @staticmethod
     def reduction(reduction_tensor, reduction_type):
         """

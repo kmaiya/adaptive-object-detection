@@ -108,7 +108,7 @@ class SensitivityMeasurer(PreModel):
                 # here implements the jacobian of a layer
                 return self.compute_layer_jacobian(inputs, *outputs)
 
-        elif mode == "reduction_mean":
+        elif mode == "reduction_mean_channel":
             jacobian = []
             for layer_idx in range(self.layer_num):
                 for channel_idx in range(self.channel_count[layer_idx]):
@@ -116,6 +116,12 @@ class SensitivityMeasurer(PreModel):
                                                                   layer_idx, channel_idx, mode=mode).clone().cpu())
                     torch.cuda.empty_cache()
             return jacobian
+
+        elif mode == "reduction_mean_layer":
+            jacobian = []
+            for layer_idx in range(self.layer_num):
+                jacobian.append(self.compute_layer_jacobian(inputs,
+                                                            layer_idx))
 
     def gradient_incr(self, inputs):
         """
@@ -128,3 +134,13 @@ class SensitivityMeasurer(PreModel):
         for i in range(self.layer_num):
             gradients.append(self.forward_pass(inputs, input_index=i, output_index=i + 1))
         return gradients
+
+    def compute_paper(self, img):
+        if self.cuda:
+            img = img.to(self.device)
+
+        alpha = 1
+        output = self.model(input_index=alpha, output_index=self.layer_num + 10)
+        output_index = 10  # TODO get the index
+        output[output_index].backward()
+        score_function = self.module_list[alpha][0].weight.grad  # take the derivative w.r.t. weights
