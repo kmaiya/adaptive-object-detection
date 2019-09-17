@@ -28,7 +28,7 @@ import numpy as np
 
 '''Utility functions'''
 
-def get_output(fname):
+def get_output(fname, is_conf):
 
     """Gets detectionn data from 1 text file.
     Parameters
@@ -44,15 +44,24 @@ def get_output(fname):
     with open(fname) as f:
         data = f.readlines()
 
-    data = [x.strip('\n').split(',') for x in data[1:]]
+    ###########for yolo
+    # data = [x.strip('\n').split(',') for x in data[1:]]
+
+    #for others
+    data = [x.strip('\n').split(',') for x in data]
+
     num = len(data)
 
     outputs = np.zeros((num, 7))
 
+    if(is_conf):
     #assign output nd-array
-    for i in range(num):
-        outputs[i, 0], outputs[i, 1], outputs[i, 2], outputs[i, 3], outputs[i, 4], outputs[i, 5] = float((data[i])[3]), float((data[i])[4]), float((data[i])[5]), float((data[i])[6]), float((data[i])[1]), float((data[i])[2])
-    
+        for i in range(num):
+            outputs[i, 0], outputs[i, 1], outputs[i, 2], outputs[i, 3], outputs[i, 4], outputs[i, 5] = float((data[i])[3]), float((data[i])[4]), float((data[i])[5]), float((data[i])[6]), float((data[i])[1]), float((data[i])[2])
+    else:
+        for i in range(num):
+            outputs[i, 0], outputs[i, 1], outputs[i, 2], outputs[i, 3], outputs[i, 4] = float((data[i])[2]), float((data[i])[3]), float((data[i])[4]), float((data[i])[5]), float((data[i])[1])
+
     #convert to list
     out = []
     out.append(outputs)
@@ -92,7 +101,8 @@ def bbox_iou_numpy(box1, box2):
 parser = argparse.ArgumentParser()
 parser.add_argument("--iou_thres", type=float, default=0.8, help="iou threshold for one-to-one pairing of images in two consecutive frames")
 parser.add_argument("--conf_thres", type=float, default=0.5, help="confidence threshold value for detections in the test file")
-parser.add_argument("--dir", type=str, default='yolo_predictions', help="path of directory containing detection text files")
+parser.add_argument("--dir", type=str, default='/local/b/cam2/data/motchallenge/mot17/newaa_results/mot05/', help="path of directory containing detection text files")
+parser.add_argument("--is_obj_conf", type=bool, default=False, help="flag for whether object confidence is present or not")
 opt = parser.parse_args()
 
 prev_boxes = None
@@ -111,10 +121,30 @@ fragment_error_count = 0
 #images = #text files in input directory
 num_images = len([x for x in os.listdir(opt.dir)])
 
+# frag_errors = open(opt.dir[:-30] + 'faster_rcnn_individual_image_fragment_errors.txt', 'w')
+# frag_errors = open(opt.dir[:-32] + 'ssd_individual_image_fragment_errors.txt', 'w')
+# frag_errors = open(opt.dir + 'retina_net_individual_image_fragment_errors.txt', 'w')
+frag_errors = open('/local/b/cam2/data/motchallenge/mot17/newaa_results/mot17-05_error_per_frame.txt', 'w')
+
 for batch in range(num_images):
 
-    fname = opt.dir + '/img{}.txt'.format(batch)
-    outputs = get_output(fname)
+    ### for yolo
+    # fname = opt.dir + '/img{}.txt'.format(batch)
+    # outputs = get_output(fname, opt.is_obj_conf)
+    ### for faster_rcnn, ssd, retina_net
+    index = batch+1
+    name_format = ''
+    if (index < 10):
+        name_format = '00000{}.txt'.format(index)
+    elif (index < 100):
+        name_format = '0000{}.txt'.format(index)
+    elif (index < 1000):
+        name_format = '000{}.txt'.format(index)
+    else:
+        name_format = '00{}.txt'.format(index)
+
+    fname = opt.dir + name_format
+    outputs = get_output(fname, opt.is_obj_conf)
 
     for output in outputs:
         
@@ -168,6 +198,9 @@ for batch in range(num_images):
 
                 #updating frament error value
                 curr_img_error = len(curr_ious) - np.sum(curr_ious)
+                frag_errors.write('{}\n'.format(curr_img_error))
                 fragment_error_count += curr_img_error
 
+frag_errors.close()
+fragment_error_count = fragment_error_count/num_images
 print('Final fragment error for conf thresh: {} is : {}\n'.format(opt.conf_thres, fragment_error_count))
