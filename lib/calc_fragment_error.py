@@ -97,12 +97,14 @@ def bbox_iou_numpy(box1, box2):
 
 '''Main Script'''
 
+normal = '/local/b/cam2/data/motchallenge/mot17/test/MOT17-14/original_detection_text_file/'
+aa = '/local/b/cam2/data/motchallenge/mot17/newaa_results/all_videos/mot14_textfiles/'
 #get arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--iou_thres", type=float, default=0.8, help="iou threshold for one-to-one pairing of images in two consecutive frames")
 parser.add_argument("--conf_thres", type=float, default=0.5, help="confidence threshold value for detections in the test file")
-parser.add_argument("--dir", type=str, default='/local/b/cam2/data/motchallenge/mot17/newaa_results/mot05/', help="path of directory containing detection text files")
-parser.add_argument("--is_obj_conf", type=bool, default=False, help="flag for whether object confidence is present or not")
+parser.add_argument("--dir", type=str, default=aa, help="path of directory containing detection text files")
+parser.add_argument("--is_obj_conf", type=bool, default=True, help="flag for whether object confidence is present or not")
 opt = parser.parse_args()
 
 prev_boxes = None
@@ -119,8 +121,8 @@ obj_conf = None
 fragment_error_count = 0
 
 #images = #text files in input directory
-num_images = len([x for x in os.listdir(opt.dir)])
-
+num_images = len([x for x in os.listdir(opt.dir)]) - 1
+print(num_images)
 # frag_errors = open(opt.dir[:-30] + 'faster_rcnn_individual_image_fragment_errors.txt', 'w')
 # frag_errors = open(opt.dir[:-32] + 'ssd_individual_image_fragment_errors.txt', 'w')
 # frag_errors = open(opt.dir + 'retina_net_individual_image_fragment_errors.txt', 'w')
@@ -174,6 +176,9 @@ for batch in range(num_images):
                 #for each predicition in current image, getting highest matching iou from previous frame detections
                 curr_ious = bbox_iou_numpy(prev_boxes[:,0:4], pred_boxes[:,0:4])
                 
+                #get number of detection in the image
+                num_detections = len(pred_boxes)
+
                 #getting row wise and column wise sum for the ious
                 col_iou_sum = np.sum(curr_ious, axis=0)
                 row_iou_sum = np.sum(curr_ious, axis=1)
@@ -199,7 +204,7 @@ for batch in range(num_images):
                 #updating frament error value
                 curr_img_error = len(curr_ious) - np.sum(curr_ious)
                 frag_errors.write('{}\n'.format(curr_img_error))
-                fragment_error_count += curr_img_error
+                fragment_error_count += curr_img_error / num_detections
 
 frag_errors.close()
 fragment_error_count = fragment_error_count/num_images
