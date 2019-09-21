@@ -44,10 +44,6 @@ def get_output(fname, is_conf):
     with open(fname) as f:
         data = f.readlines()
 
-    ###########for yolo
-    # data = [x.strip('\n').split(',') for x in data[1:]]
-
-    #for others
     data = [x.strip('\n').split(',') for x in data]
 
     num = len(data)
@@ -97,8 +93,10 @@ def bbox_iou_numpy(box1, box2):
 
 '''Main Script'''
 
+#set default path for parser args
 normal = '/local/b/cam2/data/motchallenge/mot17/test/MOT17-14/original_detection_text_file/'
 aa = '/local/b/cam2/data/motchallenge/mot17/newaa_results/all_videos/mot14_textfiles/'
+
 #get arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--iou_thres", type=float, default=0.8, help="iou threshold for one-to-one pairing of images in two consecutive frames")
@@ -122,18 +120,11 @@ fragment_error_count = 0
 
 #images = #text files in input directory
 num_images = len([x for x in os.listdir(opt.dir)]) - 1
-print(num_images)
-# frag_errors = open(opt.dir[:-30] + 'faster_rcnn_individual_image_fragment_errors.txt', 'w')
-# frag_errors = open(opt.dir[:-32] + 'ssd_individual_image_fragment_errors.txt', 'w')
-# frag_errors = open(opt.dir + 'retina_net_individual_image_fragment_errors.txt', 'w')
+
 frag_errors = open('/local/b/cam2/data/motchallenge/mot17/newaa_results/mot17-05_error_per_frame.txt', 'w')
 
 for batch in range(num_images):
 
-    ### for yolo
-    # fname = opt.dir + '/img{}.txt'.format(batch)
-    # outputs = get_output(fname, opt.is_obj_conf)
-    ### for faster_rcnn, ssd, retina_net
     index = batch+1
     name_format = ''
     if (index < 10):
