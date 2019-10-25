@@ -93,16 +93,19 @@ def bbox_iou_numpy(box1, box2):
 
 '''Main Script'''
 
-#set default path for parser args
-normal = '/local/b/cam2/data/motchallenge/mot17/test/MOT17-14/original_detection_text_file/'
-aa = '/local/b/cam2/data/motchallenge/mot17/newaa_results/all_videos/mot14_textfiles/'
+#set default path for parser args for YOLO
+normal = '/local/b/cam2/data/motchallenge/mot17/test/MOT17-01/original_detection_text_file/'
+aa = '/local/b/cam2/data/motchallenge/mot17/newaa_results/all_videos/mot01_textfiles/'
+
+#set arg path for non YOLO DETECTORS
+path = '/local/a/ksivaman/YOLO/PyTorch-YOLOv3/tmp_txt_files/MOT17-14/'
 
 #get arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--iou_thres", type=float, default=0.8, help="iou threshold for one-to-one pairing of images in two consecutive frames")
 parser.add_argument("--conf_thres", type=float, default=0.5, help="confidence threshold value for detections in the test file")
-parser.add_argument("--dir", type=str, default=aa, help="path of directory containing detection text files")
-parser.add_argument("--is_obj_conf", type=bool, default=True, help="flag for whether object confidence is present or not")
+parser.add_argument("--dir", type=str, default=path, help="path of directory containing detection text files")
+parser.add_argument("--is_obj_conf", type=bool, default=False, help="flag for whether object confidence is present or not")
 opt = parser.parse_args()
 
 prev_boxes = None
@@ -121,7 +124,7 @@ fragment_error_count = 0
 #images = #text files in input directory
 num_images = len([x for x in os.listdir(opt.dir)]) - 1
 
-frag_errors = open('/local/b/cam2/data/motchallenge/mot17/newaa_results/mot17-05_error_per_frame.txt', 'w')
+frag_errors = open('/local/b/cam2/data/motchallenge/mot17/newaa_results/mot17-10_error_per_frame.txt', 'w')
 
 for batch in range(num_images):
 
@@ -195,6 +198,8 @@ for batch in range(num_images):
                 #updating frament error value
                 curr_img_error = len(curr_ious) - np.sum(curr_ious)
                 frag_errors.write('{}\n'.format(curr_img_error))
+                if num_detections == 0:
+                    continue
                 fragment_error_count += curr_img_error / num_detections
 
 frag_errors.close()
