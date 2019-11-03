@@ -53,12 +53,19 @@ total_normal_confidence = 0
 for conf in normal_confidences:
     total_normal_confidence += conf
 
-# print(antialiased_confidences[110:120], '\n\n')
-# print(normal_confidences[110:120])
-i = 100
-while(i < 200):
+aa = open('aa.txt', 'a')
+normal = open('normal.txt', 'a')
+i = 90
+while(i < 190):
     print('------------------------------')
     print('antialiased', stdev(antialiased_confidences[i:i+10]))
     print('normal', stdev(normal_confidences[i:i+10]))
+    x = '{}\n'.format(stdev(antialiased_confidences[i:i+10]))
+    y = '{}\n'.format(stdev(normal_confidences[i:i+10]))
+    # aa.write(x)
+    # normal.write(y)
     print('------------------------------')
-    i += 10
+    i += 5
+
+aa.close()
+normal.close()
