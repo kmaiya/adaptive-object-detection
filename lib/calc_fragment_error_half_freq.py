@@ -98,7 +98,7 @@ normal = '/local/b/cam2/data/motchallenge/mot17/test/MOT17-01/original_detection
 aa = '/local/b/cam2/data/motchallenge/mot17/train/MOT17-02/antialiased_detection_text_file/'
 
 #set arg path for non YOLO DETECTORS
-path = '/local/a/ksivaman/YOLO/PyTorch-YOLOv3/tmp_txt_files/MOT17-02/'
+path = '/local/a/ksivaman/YOLO/PyTorch-YOLOv3/tmp_txt_files/MOT17-14/'
 
 #get arguments
 parser = argparse.ArgumentParser()
@@ -142,66 +142,66 @@ for batch in range(num_images):
     fname = opt.dir + name_format
     outputs = get_output(fname, opt.is_obj_conf)
 
-    for output in outputs:
-        
-        #updating previous boxes, labels, and confidences
-        prev_boxes = pred_boxes
-        prev_labels = pred_labels
-        prev_class_conf = class_conf
-        prev_obj_conf = obj_conf
+    if (batch % 2) or (batch == 0):
+        for output in outputs:
+            #updating previous boxes, labels, and confidences
+            prev_boxes = pred_boxes
+            prev_labels = pred_labels
+            prev_class_conf = class_conf
+            prev_obj_conf = obj_conf
 
-        if output is not None:
+            if output is not None:
 
-            pred_boxes = output[:, :5]
-            scores = output[:, 4]
-            pred_labels = output[:, -1]
-            
-            # Order by confidence
-            sort_i = np.argsort(scores)
-            pred_labels = pred_labels[sort_i]
-            pred_boxes = pred_boxes[sort_i]
-
-            obj_conf = output[:, 4]
-            class_conf = output[:, 5]
-
-            #analyzing all images apart from first one (first image has no previous frame)
-            if batch != 0:
-
-                #for each predicition in current image, getting highest matching iou from previous frame detections
-                curr_ious = bbox_iou_numpy(prev_boxes[:,0:4], pred_boxes[:,0:4])
+                pred_boxes = output[:, :5]
+                scores = output[:, 4]
+                pred_labels = output[:, -1]
                 
-                #get number of detection in the image
-                num_detections = len(pred_boxes)
+                # Order by confidence
+                sort_i = np.argsort(scores)
+                pred_labels = pred_labels[sort_i]
+                pred_boxes = pred_boxes[sort_i]
 
-                #getting row wise and column wise sum for the ious
-                col_iou_sum = np.sum(curr_ious, axis=0)
-                row_iou_sum = np.sum(curr_ious, axis=1)
+                obj_conf = output[:, 4]
+                class_conf = output[:, 5]
 
-                curr_ious = np.sum(curr_ious, axis=1)
-                curr_ious = np.where((curr_ious > opt.iou_thres), 1, 0)
+                #analyzing all images apart from first one (first image has no previous frame)
+                if batch != 0:
 
-                #getting the predicted x coordinated and y coordinates
-                x_coord_preds = prev_boxes[:,0]
-                y_coord_preds = prev_boxes[:,1]
-                
-                #checking lower bound and upper bound of x so that the image is not on the verge on exiting the frame
-                x_lb = x_coord_preds < 0
-                is_x_lb = np.where(x_lb == True, 1, 0)
-                x_ub = x_coord_preds > 400
-                is_x_ub = np.where(x_ub == True, 1, 0)
+                    #for each predicition in current image, getting highest matching iou from previous frame detections
+                    curr_ious = bbox_iou_numpy(prev_boxes[:,0:4], pred_boxes[:,0:4])
+                    
+                    #get number of detection in the image
+                    num_detections = len(pred_boxes)
 
-                #updating iou vector
-                curr_ious = np.where(curr_ious + x_lb >= 1 , 1, 0)
-                curr_ious = np.where(curr_ious + x_ub >= 1 , 1, 0)
-                curr_ious = np.where(prev_labels == 0, curr_ious, 1)
+                    #getting row wise and column wise sum for the ious
+                    col_iou_sum = np.sum(curr_ious, axis=0)
+                    row_iou_sum = np.sum(curr_ious, axis=1)
 
-                #updating frament error value
-                curr_img_error = len(curr_ious) - np.sum(curr_ious)
-                frag_errors.write('{}\n'.format(curr_img_error))
-                if num_detections == 0:
-                    continue
-                fragment_error_count += curr_img_error / num_detections
+                    curr_ious = np.sum(curr_ious, axis=1)
+                    curr_ious = np.where((curr_ious > opt.iou_thres), 1, 0)
+
+                    #getting the predicted x coordinated and y coordinates
+                    x_coord_preds = prev_boxes[:,0]
+                    y_coord_preds = prev_boxes[:,1]
+                    
+                    #checking lower bound and upper bound of x so that the image is not on the verge on exiting the frame
+                    x_lb = x_coord_preds < 0
+                    is_x_lb = np.where(x_lb == True, 1, 0)
+                    x_ub = x_coord_preds > 400
+                    is_x_ub = np.where(x_ub == True, 1, 0)
+
+                    #updating iou vector
+                    curr_ious = np.where(curr_ious + x_lb >= 1 , 1, 0)
+                    curr_ious = np.where(curr_ious + x_ub >= 1 , 1, 0)
+                    curr_ious = np.where(prev_labels == 0, curr_ious, 1)
+
+                    #updating frament error value
+                    curr_img_error = len(curr_ious) - np.sum(curr_ious)
+                    frag_errors.write('{}\n'.format(curr_img_error))
+                    if num_detections == 0:
+                        continue
+                    fragment_error_count += curr_img_error / num_detections
 
 frag_errors.close()
-fragment_error_count = fragment_error_count/num_images
+fragment_error_count = (2 * fragment_error_count)/num_images
 print('Final fragment error for conf thresh: {} is : {}\n'.format(opt.conf_thres, fragment_error_count))
